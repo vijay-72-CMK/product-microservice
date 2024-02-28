@@ -80,6 +80,11 @@ public class ProductController {
         return productService.getAvailableQuantity(productId);
     }
 
+    @GetMapping("/{id}")
+    public Product getProduct(@PathVariable @NotBlank String id) {
+        return productService.getProductById(id);
+    }
+
 
     @GetMapping("/{id}")
     public Product getProduct(@PathVariable @NotBlank String id) {
