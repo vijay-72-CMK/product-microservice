@@ -132,6 +132,15 @@ public class ProductService {
         return sortBy.equals("name") || sortBy.equals("price") || sortBy.equals("brand") || sortBy.equals("categoryName");
     }
 
+    public Product getProductById(String id) {
+        try {
+            return productRepository.findById(id)
+                    .orElseThrow(() -> new GeneralInternalException("id does not exist", HttpStatus.NOT_FOUND));
+        } catch (DataAccessException e) {
+            throw new GeneralInternalException("Some database error while getting product with id: " + id);
+        }
+    }
+
     @Data
     public static class Result {
         private int totalCount;
