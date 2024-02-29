@@ -17,9 +17,11 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 @Service
 public class ProductService {
@@ -78,6 +80,11 @@ public class ProductService {
             throw new GeneralInternalException("Direction must only be 'asc' or 'desc'", HttpStatus.BAD_REQUEST);
         }
 
+        List<String> categoryArray = Arrays.asList(category.split(","));
+        categoryArray = Arrays.stream(category.split(","))
+                .filter(s -> !s.isEmpty())
+                .collect(Collectors.toList());
+
         // Build criteria list
         List<Criteria> criteriaList = new ArrayList<>();
         if (keyword != null && !keyword.isEmpty()) {
@@ -89,9 +96,15 @@ public class ProductService {
                     Criteria.where("tags").in(keyword)
             ));
         }
-        if (category != null && !category.isEmpty()) {
-            criteriaList.add(Criteria.where("categoryName").is(category));
+
+//        if (category != null && !category.isEmpty()) {
+//            criteriaList.add(Criteria.where("categoryName").is(category));
+//        }
+
+        if (categoryArray.size() > 0) {
+            criteriaList.add(Criteria.where("categoryName").in(categoryArray));
         }
+
         if (minPrice != null) {
             criteriaList.add(Criteria.where("price").gte(minPrice));
         }
