@@ -80,7 +80,7 @@ public class ProductService {
             throw new GeneralInternalException("Direction must only be 'asc' or 'desc'", HttpStatus.BAD_REQUEST);
         }
 
-        List<String> categoryArray = Arrays.asList(category.split(","));
+        List<String> categoryArray;
         categoryArray = Arrays.stream(category.split(","))
                 .filter(s -> !s.isEmpty())
                 .collect(Collectors.toList());
@@ -97,11 +97,7 @@ public class ProductService {
             ));
         }
 
-//        if (category != null && !category.isEmpty()) {
-//            criteriaList.add(Criteria.where("categoryName").is(category));
-//        }
-
-        if (categoryArray.size() > 0) {
+        if (!categoryArray.isEmpty()) {
             criteriaList.add(Criteria.where("categoryName").in(categoryArray));
         }
 

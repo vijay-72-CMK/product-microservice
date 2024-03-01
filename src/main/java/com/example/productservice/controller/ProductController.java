@@ -86,9 +86,5 @@ public class ProductController {
     }
 
 
-    @GetMapping("/{id}")
-    public Product getProduct(@PathVariable @NotBlank String id) {
-        return productService.getProductById(id);
-    }
 
 }
