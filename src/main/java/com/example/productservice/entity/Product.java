@@ -32,7 +32,7 @@ public class Product {
     private Double price;
 
     @NotNull
-    private Integer quantity;
+    private Integer availableQuantity;
 
     private ArrayList<String> images;
 
