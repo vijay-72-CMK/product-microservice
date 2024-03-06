@@ -60,18 +60,20 @@ public class ProductController {
     @GetMapping("/search")
     public Page<Product> searchProducts(
             @RequestParam(required = false) String keyword,
-            @RequestParam(required = false) String category,
+            @RequestParam(required = false, defaultValue = "") String category,
             @RequestParam(required = false) Double minPrice,
             @RequestParam(required = false) Double maxPrice,
             @RequestParam(defaultValue = "0") @PositiveOrZero Integer page,
             @RequestParam(defaultValue = "10") @Positive Integer size,
+            @RequestParam(required = false, defaultValue = "") String boardSize,
+            @RequestParam(required = false, defaultValue = "") String brand,
             @RequestParam(required = false, defaultValue = "name") String sortBy,
-            @RequestParam(defaultValue = "asc") String sortDirection) {
+            @RequestParam(required = false, defaultValue = "asc") String sortDirection) {
 
 
-
-        Pageable pageable = PageRequest.of(page, size, Sort.by(sortDirection, sortBy));
-        return productService.searchProducts(keyword, category, minPrice, maxPrice, sortBy, sortDirection, pageable);
+        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.fromString(sortDirection), sortBy));
+        System.out.println(pageable.getSort());
+        return productService.searchProducts(keyword, category, minPrice, maxPrice, sortBy, sortDirection, boardSize, brand, pageable);
     }
 
     @GetMapping("/get-quantity/{productId}")

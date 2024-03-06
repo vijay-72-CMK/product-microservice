@@ -9,11 +9,13 @@ import org.springframework.dao.DataAccessException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.aggregation.Aggregation;
 import org.springframework.data.mongodb.core.aggregation.AggregationResults;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.core.parameters.P;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -21,7 +23,6 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 @Service
 public class ProductService {
@@ -71,7 +72,7 @@ public class ProductService {
         }
     }
 
-    public Page<Product> searchProducts(String keyword, String category, Double minPrice, Double maxPrice, String sortBy, String sortDirection, Pageable pageable) {
+    public Page<Product> searchProducts(String keyword, String category, Double minPrice, Double maxPrice, String sortBy, String sortDirection, String boardSize, String brand, Pageable pageable) {
         if (!isValidSortByField(sortBy)) {
             String availableSortOptions = "Available sorting options: name, price, brand, categoryName";
             throw new GeneralInternalException("Invalid sortBy value: " + sortBy + ". " + availableSortOptions, HttpStatus.BAD_REQUEST);
@@ -80,10 +81,18 @@ public class ProductService {
             throw new GeneralInternalException("Direction must only be 'asc' or 'desc'", HttpStatus.BAD_REQUEST);
         }
 
-        List<String> categoryArray;
-        categoryArray = Arrays.stream(category.split(","))
+        List<String> categoryArray = Arrays.stream(category.split(","))
                 .filter(s -> !s.isEmpty())
-                .collect(Collectors.toList());
+                .toList();
+
+        List<String> boardSizeList = Arrays.stream(boardSize.split(","))
+                .filter(s -> !s.isEmpty())
+                .toList();
+
+        List<String> brandList = Arrays.stream(brand.split(","))
+                .filter(s -> !s.isEmpty())
+                .toList();
+
 
         // Build criteria list
         List<Criteria> criteriaList = new ArrayList<>();
@@ -108,6 +117,14 @@ public class ProductService {
             criteriaList.add(Criteria.where("price").lte(maxPrice));
         }
 
+        if (!boardSizeList.isEmpty()) {
+            criteriaList.add(Criteria.where("boardSize").in(boardSizeList));
+        }
+
+        if (!brandList.isEmpty()) {
+            criteriaList.add(Criteria.where("brand").in(brandList));
+        }
+
         Criteria matchCriteria = new Criteria();
         if (!criteriaList.isEmpty()) {
             matchCriteria = new Criteria().andOperator(criteriaList.toArray(new Criteria[0]));
@@ -118,10 +135,13 @@ public class ProductService {
     }
 
     public Result executePaged(Criteria criteria, Pageable pageable) {
+        System.out.println(pageable.getSort());
+        Sort sort = pageable.getSort().and(Sort.by(Sort.Direction.ASC, "_id"));
+
         var match = Aggregation.match(criteria);
         var facets = Aggregation
                 .facet(
-                        Aggregation.sort(pageable.getSort()),
+                        Aggregation.sort(sort),
                         Aggregation.skip(pageable.getOffset()),
                         Aggregation.limit(pageable.getPageSize())
                 ).as("products")
@@ -138,7 +158,8 @@ public class ProductService {
     }
 
     private boolean isValidSortByField(String sortBy) {
-        return sortBy.equals("name") || sortBy.equals("price") || sortBy.equals("brand") || sortBy.equals("categoryName");
+        return sortBy.equals("name") || sortBy.equals("price") || sortBy.equals("brand")
+                || sortBy.equals("categoryName") || sortBy.equals("createdAt");
     }
 
     public Product getProductById(String id) {

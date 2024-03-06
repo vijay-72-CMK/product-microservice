@@ -48,6 +48,8 @@ public class Product {
 
     private Double averageRating;
 
+    private String boardSize;
+
     @CreatedDate
     private Date createdAt;
 }
