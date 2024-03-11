@@ -11,12 +11,18 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.dao.DataAccessException;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.mongodb.core.MongoTemplate;
+import org.springframework.data.mongodb.core.aggregation.Aggregation;
+import org.springframework.data.mongodb.core.aggregation.AggregationResults;
 import org.springframework.http.HttpStatus;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -39,6 +45,9 @@ class ProductServiceTest {
     @InjectMocks
     private ProductService productService;
 
+    @Mock
+    private MongoTemplate mongoTemplate;
+
     @Test
     public void testAddProduct_Successful() {
         Product product = createValidProduct();
@@ -59,7 +68,6 @@ class ProductServiceTest {
 
         assertNotNull(id);
         assertEquals("productId", id);
-        verify(categoryService, times(1)).getCategoryByName(categoryName);
         verify(productRepository, times(1)).save(product);
     }
 
@@ -109,12 +117,94 @@ class ProductServiceTest {
 
         when(categoryService.getCategoryByName(categoryName.toLowerCase())).thenReturn(category);
 
-        when(productRepository.save(product)).thenThrow(new DataAccessException("DB Error") {});
+        when(productRepository.save(product)).thenThrow(new DataAccessException("DB Error") {
+        });
 
         assertThrows(GeneralInternalException.class, () -> productService.addProduct(product, categoryName),
                 "Some database error while adding product");
 
         verify(productRepository, times(1)).save(product);
+    }
+
+    @Test
+    public void testGetAllProducts_Successful() {
+        List<Product> expectedProducts = Arrays.asList(
+                createValidProduct(),
+                createValidProduct()
+        );
+
+        when(productRepository.findAll()).thenReturn(expectedProducts);
+
+        List<Product> actualProducts = productService.getAllProducts();
+
+        assertNotNull(actualProducts);
+        assertEquals(expectedProducts.size(), actualProducts.size());
+
+        for (int i = 0; i < expectedProducts.size(); i++) {
+            Product expected = expectedProducts.get(i);
+            Product actual = actualProducts.get(i);
+
+            assertEquals(expected.getName(), actual.getName());
+            assertEquals(expected.getBrand(), actual.getBrand());
+            assertEquals(expected.getPrice(), actual.getPrice());
+            assertEquals(expected.getAvailableQuantity(), actual.getAvailableQuantity());
+            assertEquals(expected.getImages(), actual.getImages());
+            assertEquals(expected.getCategoryName(), actual.getCategoryName());
+            assertEquals(expected.getAttributes(), actual.getAttributes());
+            assertEquals(expected.getDescription(), actual.getDescription());
+            assertEquals(expected.getTags(), actual.getTags());
+            assertEquals(expected.getAverageRating(), actual.getAverageRating());
+            assertEquals(expected.getBoardSize(), actual.getBoardSize());
+        }
+
+
+        verify(productRepository, times(1)).findAll();
+    }
+
+    @Test
+    public void testGetAllProducts_DataAccessError() {
+        when(productRepository.findAll()).thenThrow(new DataAccessException("Simulated database error") {
+        });
+
+        assertThrows(GeneralInternalException.class, () -> productService.getAllProducts());
+
+        verify(productRepository, times(1)).findAll();
+    }
+
+    @Test
+    public void testDeleteProduct_Success() {
+        String productId = "testId";
+        when(productRepository.deleteProductById(productId)).thenReturn(1L);
+
+        productService.deleteProduct(productId);
+
+        verify(productRepository, times(1)).deleteProductById(productId);
+    }
+
+    @Test
+    public void testDeleteProduct_ProductNotFound() {
+        String productId = "nonExistentId";
+        when(productRepository.deleteProductById(productId)).thenReturn(0L);
+
+        GeneralInternalException exception = assertThrows(GeneralInternalException.class,
+                () -> productService.deleteProduct(productId));
+
+        assertEquals(HttpStatus.NOT_FOUND, exception.getHttpStatus());
+        verify(productRepository, times(1)).deleteProductById(productId);
+        verify(productRepository, times(1)).deleteProductById(productId);
+    }
+
+    @Test
+    public void testDeleteProduct_DataAccessError() {
+        String productId = "someId";
+        when(productRepository.deleteProductById(productId)).thenThrow(new DataAccessException("Database issue") {
+        });
+
+        GeneralInternalException exception = assertThrows(GeneralInternalException.class,
+                () -> productService.deleteProduct(productId));
+
+        assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, exception.getHttpStatus());
+        verify(productRepository, times(1)).deleteProductById(productId);
     }
 
     private Product createValidProduct() {

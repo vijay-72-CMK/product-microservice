@@ -4,6 +4,7 @@ import com.example.productservice.entity.Category;
 import com.example.productservice.entity.Product;
 import com.example.productservice.exception.GeneralInternalException;
 import com.example.productservice.repository.ProductRepository;
+import lombok.AllArgsConstructor;
 import lombok.Data;
 import org.springframework.dao.DataAccessException;
 import org.springframework.data.domain.Page;
@@ -172,6 +173,7 @@ public class ProductService {
     }
 
     @Data
+    @AllArgsConstructor
     public static class Result {
         private int totalCount;
         private List<Product> products;

@@ -8,7 +8,13 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.context.annotation.Bean;
+import org.springframework.data.mongodb.core.mapping.MongoMappingContext;
 import org.springframework.http.MediaType;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
@@ -38,7 +44,7 @@ public class ProductControllerTest {
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     @Test
-    public void testAddProduct_Successful() throws Exception {
+    public void testAddProduct_BlankCategoryName() throws Exception {
         Product product = createValidProduct();
         String categoryName = "TestCategory";
         String productId = "productId";
