@@ -1,5 +1,6 @@
 package com.example.productservice.service;
 
+import com.example.productservice.dto.ProductEditDTO;
 import com.example.productservice.entity.Category;
 import com.example.productservice.entity.Product;
 import com.example.productservice.exception.GeneralInternalException;
@@ -172,8 +173,25 @@ public class ProductService {
         }
     }
 
+    public void updateProduct(String id, ProductEditDTO productData) {
+        try {
+            Product product = productRepository.findById(id)
+                    .orElseThrow(() -> new GeneralInternalException("Product not found", HttpStatus.NOT_FOUND));
+
+
+            product.setName(productData.getName());
+            product.setPrice(productData.getPrice());
+            product.setAvailableQuantity(productData.getAvailableQuantity());
+            product.setDescription(productData.getDescription());
+
+            productRepository.save(product);
+        } catch (DataAccessException e) {
+            throw new GeneralInternalException("Some database error when editing product with id: " + id);
+    }
+
+}
+
     @Data
-    @AllArgsConstructor
     public static class Result {
         private int totalCount;
         private List<Product> products;
